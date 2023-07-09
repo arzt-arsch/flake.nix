@@ -127,7 +127,6 @@
     python311Full
     python311Packages.pip
     bacon
-    thunar
     qbittorrent
   ];
   services.flatpak.enable = true;
