@@ -41,7 +41,7 @@
   services.xserver.enable = true;
   services.xserver.displayManager.sddm.enable = true;
   # enable the plasma desktop
-  services.xserver.desktopManager.plasma5.enable = true;
+  services.xserver.desktopManager.cinnamon.enable = true;
   # enable the Hyprland window manager
   programs.hyprland.enable = true;
 
@@ -53,6 +53,7 @@
 
   # Enable sound.
   sound.enable = true;
+  hardware.pulseaudio.enable = false;
   security.rtkit.enable = true;
   services.pipewire = {
     enable = true;
@@ -80,127 +81,11 @@
   };
 
   environment.systemPackages = with pkgs; [
-    (pkgs.buildFHSUserEnv {
-      name = "fhs";
-      targetPkgs = pkgs: with pkgs; [
-        desktop-file-utils
-        xorg.libXcomposite
-        xorg.libXtst
-        xorg.libXrandr
-        xorg.libXext
-        xorg.libX11
-        xorg.libXfixes
-        libGL
-        gst_all_1.gstreamer
-        gst_all_1.gst-plugins-ugly
-        gst_all_1.gst-plugins-base
-        libdrm
-        xorg.xkeyboardconfig
-        xorg.libpciaccess
-        glib
-        gtk2
-        bzip2
-        zlib
-        gdk-pixbuf
-        xorg.libXinerama
-        xorg.libXdamage
-        xorg.libXcursor
-        xorg.libXrender
-        xorg.libXScrnSaver
-        xorg.libXxf86vm
-        xorg.libXi
-        xorg.libSM
-        xorg.libICE
-        curlWithGnuTls
-        nspr
-        nss
-        cairo
-        pango
-        expat
-        dbus
-        cups
-        libcap
-        SDL2
-        libusb1
-        udev
-        dbus-glib
-        atk
-        at-spi2-atk
-        libudev0-shim
-        xorg.libXt
-        xorg.libXmu
-        xorg.libxcb
-        xorg.xcbutil
-        xorg.xcbutilwm
-        xorg.xcbutilimage
-        xorg.xcbutilkeysyms
-        xorg.xcbutilrenderutil
-        libGLU
-        libuuid
-        libogg
-        libvorbis
-        SDL
-        SDL2_image
-        glew110
-        openssl
-        libidn
-        tbb
-        wayland
-        mesa
-        libxkbcommon
-        vulkan-loader
-        flac
-        freeglut
-        libjpeg
-        libpng12
-        libpulseaudio
-        libsamplerate
-        libmikmod
-        libtheora
-        libtiff
-        pixman
-        speex
-        SDL_image
-        SDL_ttf
-        SDL_mixer
-        SDL2_ttf
-        SDL2_mixer
-        libappindicator-gtk2
-        libcaca
-        libcanberra
-        libgcrypt
-        libvpx
-        librsvg
-        xorg.libXft
-        libvdpau
-        alsa-lib
-        harfbuzz
-        e2fsprogs
-        libgpg-error
-        keyutils.lib
-        libjack2
-        fribidi
-        p11-kit
-        gmp
-        libtool.lib
-        xorg.libxshmfence
-        at-spi2-core
-        gnumake
-        gcc
-      ];
-      multiPkgs = pkgs: (with pkgs;
-        [
-          fontconfig
-          cmake
-          freetype
-          pkg-config
-        ]);
-      profile = ''export FHS=1'';
-      runScript = "zsh";
-    })
     firefox
     wezterm
     neovim
+    waybar
+    xdg-desktop-portal-hyprland
     curl
     wget
     code-minimap
@@ -209,13 +94,11 @@
     gcc
     git
     keepassxc
-    syncthing
     gnupg
     pinentry
     btop
     gotop
     telegram-desktop
-    waybar
     kickoff
     prismlauncher
     neofetch
@@ -249,7 +132,11 @@
     rust-analyzer
     starship
     vscode-fhs
+    steam
+    inotify-tools
+    s-tui
   ];
+
   services.flatpak.enable = true;
 
   programs.zsh.enable = true;
@@ -257,7 +144,7 @@
   virtualisation.libvirtd.enable = true;
   programs.dconf.enable = true;
 
-  fonts.fonts = with pkgs; [
+  fonts.packages = with pkgs; [
     source-code-pro
     font-awesome
     ubuntu_font_family
@@ -276,7 +163,7 @@
   services.syncthing = {
     enable = true;
     user = "arzt"; # Folder for Syncthing's settings and keys
-    configDir = "/home/arzt/Documents/.config/syncthing";
+    configDir = "/home/arzt/.config/syncthing/";
     devices = {
       "syncthing-server" = {
         id = "G73YKIP-5LR3WX6-3MB3SEA-OFZ3Z63-GKXDHIF-VXOQYOA-A7EKLJ3-W72FMAT";
@@ -293,11 +180,6 @@
         devices = [ "syncthing-server" ];
         id = "s9e7r-nlkhe";
       };
-      "config" = {
-        path = "/home/arzt/.config/";
-        devices = [ "syncthing-server" ];
-        id = "tvbon-humhs";
-      };
       "keepass" = {
         path = "/home/arzt/.local/keepassdb/";
         devices = [ "syncthing-server" ];
@@ -311,7 +193,7 @@
     gc = {
       automatic = true;
       dates = "weekly";
-      options = "--delete-older-then 14d";
+      options = "--delete-older-then 7d";
     };
   };
 
