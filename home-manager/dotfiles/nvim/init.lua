@@ -1,0 +1,7 @@
+require "user.keymaps"
+require "user.reload"
+require "user.options"
+require "user.lazy"
+require "user.lsp"
+require "user.autopairs"
+require "user.colorscheme"

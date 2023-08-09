@@ -1,0 +1,8 @@
+#!/bin/sh
+
+if [[ $# -eq 0 ]] then
+  # if no arguments supplied
+  nix-shell $XDG_CONFIG_HOME/nvim/shell.nix
+else
+  nix-shell $XDG_CONFIG_HOME/nvim/shell.nix --argstr args "$@"
+fi
