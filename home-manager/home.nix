@@ -63,6 +63,12 @@
   # if you don't want to manage your shell through Home Manager.
   home.sessionVariables = {
     # EDITOR = "emacs";
+    XDG_CONFIG_HOME = "$HOME/.config";
+    XDG_CACHE_HOME = "$HOME/.cache";
+    XDG_DATA_HOME = "$HOME/.local/share";
+    XDG_STATE_HOME = "$HOME/.local/state";
+    # zsh config
+    ZDOTDIR = "$XDG_CONFIG_HOME/zsh";
   };
 
   # Let Home Manager install and manage itself.
