@@ -51,6 +51,16 @@
     };
   };
 
+  environment.sessionVariables = rec {
+    # EDITOR = "emacs";
+    XDG_CONFIG_HOME = "$HOME/.config";
+    XDG_CACHE_HOME = "$HOME/.cache";
+    XDG_DATA_HOME = "$HOME/.local/share";
+    XDG_STATE_HOME = "$HOME/.local/state";
+    # zsh config
+    ZDOTDIR = "$XDG_CONFIG_HOME/zsh";
+  };
+
   # Enable sound.
   sound.enable = true;
   hardware.pulseaudio.enable = false;
@@ -126,6 +136,9 @@
     steam
     inotify-tools
     s-tui
+    lazygit
+    joshuto
+    zoxide
   ];
 
   services.flatpak.enable = true;
