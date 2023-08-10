@@ -17,6 +17,7 @@ end
 config.color_scheme = 'GruvboxDarkHard'
 
 config.font = wezterm.font "Source Code Pro"
+config.font_size = 11.5
 
 local function map(key, mods, action)
   local _map = {
@@ -49,7 +50,7 @@ config.keys = {
   map('x', 'META', act.ShowLauncher),
   map('s', 'META', act.SplitHorizontal),
   map('v', 'META', act.SplitVertical),
-  map('q', 'META', act.CloseCurrentPane { confirm = false } ),
+  map('q', 'META', act.CloseCurrentPane { confirm = false }),
 
   map('h', 'META', act.ActivatePaneDirection 'Left'),
   map('j', 'META', act.ActivatePaneDirection 'Down'),
@@ -66,15 +67,15 @@ config.keys = {
   map('d', 'META|CTRL', act.EmitEvent 'inc-opacity'),
   map('u', 'META|CTRL', act.EmitEvent 'dec-opacity'),
 
-  map('g', 'META', act.ActivateCopyMode ),
+  map('g', 'META', act.ActivateCopyMode),
 
-  map('u', 'META', act.RotatePanes 'CounterClockwise' ),
-  map('d', 'META', act.RotatePanes 'Clockwise' ),
+  map('u', 'META', act.RotatePanes 'CounterClockwise'),
+  map('d', 'META', act.RotatePanes 'Clockwise'),
 
   map('n', 'META', act.ActivateTabRelative(1)),
   map('p', 'META', act.ActivateTabRelative(-1)),
 
-  map('n', 'META|CTRL', act.SpawnTab 'CurrentPaneDomain' ),
+  map('n', 'META|CTRL', act.SpawnTab 'CurrentPaneDomain'),
 }
 
 config.disable_default_key_bindings = false
@@ -87,6 +88,8 @@ local SOLID_LEFT_ARROW = wezterm.nerdfonts.pl_right_hard_divider
 -- The filled in variant of the > symbol
 local SOLID_RIGHT_ARROW = wezterm.nerdfonts.pl_left_hard_divider
 window_decorations = "TITLE | RESIZE"
+
+config.window_close_confirmation = 'NeverPrompt'
 
 -- and finally, return the configuration to wezterm
 return config
