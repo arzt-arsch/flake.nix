@@ -181,15 +181,15 @@
         devices = [ "syncthing-server" ];
         id = "zxgmd-6avto";
       };
-      "projects" = {
-        path = "/home/arzt/projects/";
-        devices = [ "syncthing-server" ];
-        id = "s9e7r-nlkhe";
-      };
       "keepass" = {
         path = "/home/arzt/.local/keepassdb/";
         devices = [ "syncthing-server" ];
         id = "s4wz9-6tctj";
+      };
+      "minecraft-client" = {
+        path = "/home/arzt/.local/share/PrismLauncher/";
+        devices = [ "syncthing-server" ];
+        id = "bkurt-rntt4";
       };
     };
   };
