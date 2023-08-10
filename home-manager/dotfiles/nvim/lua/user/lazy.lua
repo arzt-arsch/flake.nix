@@ -24,6 +24,17 @@ require("lazy").setup({
   "aktersnurra/no-clown-fiesta.nvim",
   "Mofiqul/vscode.nvim",
   {
+    "marko-cerovac/material.nvim",
+    priority = 1000,
+    lazy = false,
+  },
+  {
+    "bluz71/vim-moonfly-colors",
+    name = "moonfly",
+    lazy = false,
+    priority = 1000,
+  },
+  {
     "Everblush/nvim",
     name = "everblush",
   },
@@ -471,14 +482,16 @@ require("lazy").setup({
       }
     end
   },
-  { -- This plugin
+
+  {
     "Zeioth/compiler.nvim",
     cmd = { "CompilerOpen", "CompilerToggleResults" },
     dependencies = { "stevearc/overseer.nvim" },
     config = function(_, opts) require("compiler").setup(opts) end,
   },
-  {                                                    -- The framework we use to run tasks
-    "stevearc/overseer.nvim",
+
+  {
+    "stevearc/overseer.nvim",                            -- The framework we use to run tasks
     commit = "3047ede61cc1308069ad1184c0d447ebee92d749", -- Recommended to to avoid breaking changes
     cmd = { "CompilerOpen", "CompilerToggleResults" },
     opts = {
