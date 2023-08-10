@@ -79,6 +79,8 @@
     shell = pkgs.zsh;
     isNormalUser = true;
     extraGroups = [ "wheel" "libvirtd" "networkmanage" ];
+    hashedPassword =
+    "$y$j9T$R6dumX8bmYixU0kDIoGka.$7AAL3WUZAamtG9yBLZRqPYzjUYU4igTeLNoxsivj114";
   };
 
   environment.systemPackages = with pkgs; [
