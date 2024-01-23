@@ -47,15 +47,16 @@
     GTK_USE_PORTAL = 1;
   };
 
-  # wayland.windowManager.hyprland = {
-  #   enable = true;
-  #   package = hyprland.packages.${pkgs.system}.hyprland;
-  #   plugins = [
-  #     split-monitor-workspaces.packages.${pkgs.system}.default
-  #   ];
-  #   extraConfig = ''
-  #   '';
-  # };
+  wayland.windowManager.hyprland = {
+    enable = true;
+    package = hyprland.packages.${pkgs.system}.hyprland;
+    plugins = [
+      split-monitor-workspaces.packages.${pkgs.system}.default
+    ];
+    extraConfig = ''
+      source = $XDG_CONFIG_HOME/hypr/main.conf
+    '';
+  };
 
   # Home Manager is pretty good at managing dotfiles. The primary way to manage
   # plain files is through 'home.file'.

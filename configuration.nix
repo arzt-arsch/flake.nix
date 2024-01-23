@@ -3,11 +3,12 @@
 let
   unstable = import
     (builtins.fetchTarball {
-      url = "https://github.com/NixOS/nixpkgs/archive/976fa3369d722e76f37c77493d99829540d43845.tar.gz";
+      url = "https://github.com/NixOS/nixpkgs/archive/e1ee359d16a1886f0771cc433a00827da98d861c.tar.gz";
     })
     {
       config.allowUnfree = true;
-    }; in
+    };
+in
 {
   imports =
     [
@@ -60,7 +61,10 @@ let
   # enable the cinnamon desktop
   services.xserver.desktopManager.cinnamon.enable = true;
   # enable the Hyprland compositor
-  programs.hyprland.enable = true;
+  programs.hyprland = {
+    enable = true;
+    xwayland.enable = true;
+  };
 
   programs.steam.enable = true;
   programs.thunar.enable = true;
@@ -84,6 +88,20 @@ let
     ZDOTDIR = "$XDG_CONFIG_HOME/zsh";
   };
 
+  # Enable OpenGL
+  hardware.opengl = {
+    enable = true;
+    driSupport = true;
+    driSupport32Bit = true;
+    extraPackages = with pkgs; [
+      intel-media-driver
+      vaapiIntel
+      vaapiVdpau
+      libvdpau-va-gl
+      mesa.drivers
+    ];
+  };
+
   # Enable sound.
   sound.enable = true;
   hardware.pulseaudio.enable = false;
@@ -97,7 +115,7 @@ let
       enable = true;
     };
   };
-  security.rtkit.enable = true;
+
   services.pipewire = {
     enable = true;
     alsa.enable = true;
@@ -106,6 +124,9 @@ let
     # If you want to use JACK applications, uncomment this
     #jack.enable = true;
   };
+
+  security.rtkit.enable = true;
+  security.polkit.enable = true;
 
   virtualisation.docker.enable = true;
   virtualisation.docker.rootless = {
@@ -200,23 +221,8 @@ let
     nb
     xorg.xrdb
     eww-wayland
+    unstable.mpvpaper
   ];
-
-  nixpkgs.overlays = [
-    (self: super: {
-      soapysdr-with-plugins = super.soapysdr.override {
-        extraPackages = [
-          super.soapysdrplay
-          super.soapyaudio
-          super.soapyremote
-        ];
-      };
-    }
-    )
-  ];
-
-  services.sdrplayApi.enable = true;
-  hardware.rtl-sdr.enable = true;
 
   services.flatpak.enable = true;
 
