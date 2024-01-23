@@ -1,5 +1,13 @@
-{ config, pkgs, appimageTools, ... }:
+{ config, pkgs, ... }:
 
+let
+  unstable = import
+    (builtins.fetchTarball {
+      url = "https://github.com/NixOS/nixpkgs/archive/976fa3369d722e76f37c77493d99829540d43845.tar.gz";
+    })
+    {
+      config.allowUnfree = true;
+    }; in
 {
   imports =
     [
@@ -15,16 +23,25 @@
 
   boot.loader.efi.canTouchEfiVariables = true;
 
-  boot.initrd.kernelModules = [ "amdgpu" ];
+  boot.extraModulePackages = with config.boot.kernelPackages;
+    [ v4l2loopback.out ];
+
+  boot.kernelParams = [ "amd_iommu=on" "iommu=pt" ];
+  boot.initrd.kernelModules = [ "amdgpu" "v4l2loopback" "kvm-amd" "vfio-pci" ];
 
   # Use specific kernel version
   boot.kernelPackages = pkgs.linuxPackages_latest;
+  boot.extraModprobeConfig = ''
+    # exclusive_caps: Skype, Zoom, Teams etc. will only show device when actually streaming
+    # card_label: Name of virtual camera, how it'll show up in Skype, Zoom, Teams
+    # https://github.com/umlaeute/v4l2loopback
+    options v4l2loopback exclusive_caps=1 card_label="Virtual Camera"
+  '';
 
   # Networking
   networking = {
     hostName = "arzt-desktop";
     networkmanager.enable = true;
-    nameservers = [ "8.8.8.8" "8.8.4.4" ];
   };
 
   # Set your time zone.
@@ -40,18 +57,24 @@
   # enable SDDM login manager
   services.xserver.enable = true;
   services.xserver.displayManager.sddm.enable = true;
-  # enable the plasma desktop
+  # enable the cinnamon desktop
   services.xserver.desktopManager.cinnamon.enable = true;
-  # enable the Hyprland window manager
+  # enable the Hyprland compositor
   programs.hyprland.enable = true;
+
+  programs.steam.enable = true;
+  programs.thunar.enable = true;
+  services.gvfs.enable = true; # Mount, trash, and other functionalities
+  services.tumbler.enable = true; # Thumbnail support for images
 
   xdg = {
     mime.defaultApplications = {
       "inode/directory" = "thunar.desktop";
     };
   };
+  xdg.portal.enable = true;
 
-  environment.sessionVariables = rec {
+  environment.sessionVariables = {
     # EDITOR = "emacs";
     XDG_CONFIG_HOME = "$HOME/.config";
     XDG_CACHE_HOME = "$HOME/.cache";
@@ -64,6 +87,16 @@
   # Enable sound.
   sound.enable = true;
   hardware.pulseaudio.enable = false;
+  services.jack = {
+    jackd.enable = true;
+    # support ALSA only programs via ALSA JACK PCM plugin
+    alsa.enable = false;
+    # support ALSA only programs via loopback device
+    # (supports programs like Steam)
+    loopback = {
+      enable = true;
+    };
+  };
   security.rtkit.enable = true;
   services.pipewire = {
     enable = true;
@@ -74,21 +107,31 @@
     #jack.enable = true;
   };
 
+  virtualisation.docker.enable = true;
+  virtualisation.docker.rootless = {
+    enable = true;
+  };
+
   # Define a user account. Don't forget to set a password with ‘passwd’.
   users.users.arzt = {
     shell = pkgs.zsh;
     isNormalUser = true;
-    extraGroups = [ "wheel" "libvirtd" "networkmanage" ];
+    extraGroups = [ "wheel" "libvirtd" "networkmanage" "jackaudio" "docker" "kvm" ];
     hashedPassword =
-    "$y$j9T$R6dumX8bmYixU0kDIoGka.$7AAL3WUZAamtG9yBLZRqPYzjUYU4igTeLNoxsivj114";
+      "$y$j9T$R6dumX8bmYixU0kDIoGka.$7AAL3WUZAamtG9yBLZRqPYzjUYU4igTeLNoxsivj114";
   };
 
   environment.systemPackages = with pkgs; [
     firefox
     wezterm
+    alacritty
     neovim
-    waybar
-    xdg-desktop-portal-hyprland
+    (waybar.overrideAttrs
+      (oldAttrs: {
+        # for wlr support
+        mesonFlags = oldAttrs.mesonFlags ++ [ "-Dexperimental=true " ];
+      })
+    )
     curl
     wget
     code-minimap
@@ -113,12 +156,14 @@
     lm_sensors
     ripgrep
     bat
+    spice
+    win-spice
     virt-manager
+    virt-viewer
     zathura
     unzip
     unrar
     ncmpcpp
-    rust-analyzer
     mangohud
     openjdk17
     openjdk8
@@ -130,41 +175,83 @@
     hyprpicker
     bacon
     qbittorrent
-    rnix-lsp
-    lua-language-server
-    rust-analyzer
     starship
-    vscode-fhs
-    steam
     inotify-tools
     s-tui
     lazygit
-    joshuto
     zoxide
+    qpwgraph
+    obs-studio
+    pulsemixer
+    swappy
+    mypaint
+    musikcube
+    direnv
+    cmatrix
+    blender
+    soundux
+    scrcpy
+    picard
+    cli-visualizer
+    bottom
+    vscodium-fhs
+    freshfetch
+    home-manager
+    nb
+    xorg.xrdb
+    eww-wayland
   ];
+
+  nixpkgs.overlays = [
+    (self: super: {
+      soapysdr-with-plugins = super.soapysdr.override {
+        extraPackages = [
+          super.soapysdrplay
+          super.soapyaudio
+          super.soapyremote
+        ];
+      };
+    }
+    )
+  ];
+
+  services.sdrplayApi.enable = true;
+  hardware.rtl-sdr.enable = true;
 
   services.flatpak.enable = true;
 
   programs.zsh.enable = true;
 
-  virtualisation.libvirtd.enable = true;
+  # Enable libvirtd daemon
+  virtualisation.libvirtd = {
+    enable = true;
+    qemuPackage = pkgs.qemu_kvm;
+  };
+
+  # enable access from hooks to bash, modprobe, systemctl, etc
+  systemd.services.libvirtd = {
+    path =
+      let
+        env = pkgs.buildEnv {
+          name = "qemu-hook-env";
+          paths = with pkgs; [
+            bash
+            libvirt
+            kmod
+            systemd
+          ];
+        };
+      in
+      [ env ];
+  };
+
+  services.spice-vdagentd.enable = true;
+  services.udev.extraRules = ''
+    # Access to /dev/bus/usb/* devices. Needed for virt-manager USB
+    # redirection.
+    SUBSYSTEM=="usb", ENV{DEVTYPE}=="usb_device", MODE="0664", GROUP="wheel"
+  '';
   programs.dconf.enable = true;
-
-  fonts.packages = with pkgs; [
-    source-code-pro
-    font-awesome
-    ubuntu_font_family
-    nerdfonts
-  ];
-
-  nixpkgs.overlays = [
-    (self: super: {
-      waybar = super.waybar.overrideAttrs (oldAttrs: {
-        # for wlr support
-        mesonFlags = oldAttrs.mesonFlags ++ [ "-Dexperimental=true" ];
-      });
-    })
-  ];
 
   services.syncthing = {
     enable = true;

@@ -1,10 +1,12 @@
-{ config, pkgs, ... }:
+{ pkgs, hyprland, split-monitor-workspaces, ... }:
 
 {
   # Home Manager needs a bit of information about you and the paths it should
   # manage.
   home.username = "arzt";
   home.homeDirectory = "/home/arzt";
+
+  # home.enableNixpkgsReleaseCheck = false;
 
   # This value determines the Home Manager release that your configuration is
   # compatible with. This helps avoid breakage when a new Home Manager release
@@ -17,24 +19,43 @@
 
   # The home.packages option allows you to install Nix packages into your
   # environment.
-  home.packages = [
-    # # Adds the 'hello' command to your environment. It prints a friendly
-    # # "Hello, world!" when run.
-    # pkgs.hello
+  fonts.fontconfig.enable = true;
+  home.packages = with pkgs; [
+    source-code-pro
+    font-awesome
+    ubuntu_font_family
+    nerdfonts
 
-    # # It is sometimes useful to fine-tune packages, for example, by applying
-    # # overrides. You can do that directly here, just don't forget the
-    # # parentheses. Maybe you want to install Nerd Fonts with a limited number of
-    # # fonts?
-    # (pkgs.nerdfonts.override { fonts = [ "FantasqueSansMono" ]; })
-
-    # # You can also create simple shell scripts directly inside your
-    # # configuration. For example, this adds a command 'my-hello' to your
-    # # environment:
-    # (pkgs.writeShellScriptBin "my-hello" ''
-    #   echo "Hello, ${config.home.username}!"
-    # '')
+    materia-kde-theme
+    libsForQt5.qtstyleplugin-kvantum
   ];
+
+  gtk.enable = true;
+  gtk.iconTheme.package = pkgs.papirus-icon-theme;
+  gtk.iconTheme.name = "Papirus-Dark";
+
+  gtk.theme.package = pkgs.materia-theme;
+  gtk.theme.name = "Materia-dark-compact";
+
+  xdg.configFile."Kvantum/kvantum.kvconfig".text = ''
+    [General]
+    theme=MateriaDark
+  '';
+
+  home.sessionVariables = {
+    QT_STYLE_OVERRIDE = "kvantum";
+    GTK_USE_PORTAL = 1;
+  };
+
+  # wayland.windowManager.hyprland = {
+  #   enable = true;
+  #   package = hyprland.packages.${pkgs.system}.hyprland;
+  #   plugins = [
+  #     split-monitor-workspaces.packages.${pkgs.system}.default
+  #   ];
+  #   extraConfig = ''
+  #   '';
+  # };
 
   # Home Manager is pretty good at managing dotfiles. The primary way to manage
   # plain files is through 'home.file'.

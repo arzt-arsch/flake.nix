@@ -1,7 +1,0 @@
-[credential]
-	helper = store
-[user]
-	email = retin.mail@gmail.com
-	name = Arzt
-[gpg]
-	program = pinentry
