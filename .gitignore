@@ -1,2 +1,4 @@
 .zcompdump
 home-manager/result
+*.qcow2
+result

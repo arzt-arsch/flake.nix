@@ -15,7 +15,10 @@
       nixosConfigurations = {
         desktop = lib.nixosSystem {
           inherit system pkgs;
-          modules = [ ./configuration.nix ];
+          modules = [
+            # { nixpkgs = { inherit pkgs; }; }
+            ./configuration.nix
+          ];
         };
       };
     };

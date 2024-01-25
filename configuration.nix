@@ -1,14 +1,5 @@
 { config, pkgs, ... }:
 
-let
-  unstable = import
-    (builtins.fetchTarball {
-      url = "https://github.com/NixOS/nixpkgs/archive/e1ee359d16a1886f0771cc433a00827da98d861c.tar.gz";
-    })
-    {
-      config.allowUnfree = true;
-    };
-in
 {
   imports =
     [
@@ -57,6 +48,7 @@ in
 
   # enable SDDM login manager
   services.xserver.enable = true;
+  services.xserver.videoDrivers = [ "amdgpu" ];
   services.xserver.displayManager.sddm.enable = true;
   # enable the cinnamon desktop
   services.xserver.desktopManager.cinnamon.enable = true;
@@ -76,7 +68,15 @@ in
       "inode/directory" = "thunar.desktop";
     };
   };
-  xdg.portal.enable = true;
+  xdg.portal = {
+    enable = true;
+    extraPortals = with pkgs; [
+      xdg-desktop-portal-wlr
+    ];
+    wlr = {
+      enable = true;
+    };
+  };
 
   environment.sessionVariables = {
     # EDITOR = "emacs";
@@ -88,17 +88,31 @@ in
     ZDOTDIR = "$XDG_CONFIG_HOME/zsh";
   };
 
+  # For hardware acceleration
+  # nixpkgs.config.packageOverrides = pkgs: {
+  #   vaapiIntel = pkgs.vaapiIntel.override { enableHybridCodec = true; };
+  # };
+
   # Enable OpenGL
   hardware.opengl = {
+    # Mesa
     enable = true;
+
+    # Vulkan
     driSupport = true;
-    driSupport32Bit = true;
+    driSupport32Bit = true; # Steam support
+
     extraPackages = with pkgs; [
-      intel-media-driver
-      vaapiIntel
+      # Vulkan
+      mesa
+
+      # HIP
+      rocm-opencl-icd
+      rocm-opencl-runtime
+
+      # VAAPI
       vaapiVdpau
       libvdpau-va-gl
-      mesa.drivers
     ];
   };
 
@@ -153,6 +167,7 @@ in
         mesonFlags = oldAttrs.mesonFlags ++ [ "-Dexperimental=true " ];
       })
     )
+    chezmoi
     curl
     wget
     code-minimap
@@ -210,7 +225,6 @@ in
     direnv
     cmatrix
     blender
-    soundux
     scrcpy
     picard
     cli-visualizer
@@ -220,8 +234,9 @@ in
     home-manager
     nb
     xorg.xrdb
-    eww-wayland
-    unstable.mpvpaper
+    mpvpaper
+    vulkan-tools
+    vulkan-validation-layers
   ];
 
   services.flatpak.enable = true;
