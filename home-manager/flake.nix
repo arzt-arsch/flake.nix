@@ -17,9 +17,11 @@
       url = "github:Duckonaut/split-monitor-workspaces";
       inputs.hyprland.follows = "hyprland"; # IMPORTANT
     };
+
+    ags.url = "github:Aylur/ags";
   };
 
-  outputs = { nixpkgs, home-manager, split-monitor-workspaces, hyprland, ... }:
+  outputs = { nixpkgs, home-manager, split-monitor-workspaces, hyprland, ... }@inputs:
     let
       system = "x86_64-linux";
       pkgs = nixpkgs.legacyPackages.${system};
@@ -28,7 +30,7 @@
     {
       homeConfigurations."arzt" = home-manager.lib.homeManagerConfiguration {
         extraSpecialArgs = {
-          inherit nix-colors split-monitor-workspaces hyprland;
+          inherit nix-colors split-monitor-workspaces hyprland inputs;
         };
 
         inherit pkgs;

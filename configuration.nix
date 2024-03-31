@@ -1,5 +1,9 @@
 { config, pkgs, ... }:
 
+let
+  username = "arzt";
+  lib = pkgs.lib;
+in
 {
   imports =
     [
@@ -7,11 +11,14 @@
     ];
 
   # Use the GRUB boot loader.
-  boot.loader.grub.enable = true;
-  boot.loader.grub.device = "nodev";
-  boot.loader.grub.efiSupport = true;
-  boot.loader.grub.useOSProber = true;
-  boot.loader.grub.memtest86.enable = true;
+  boot.loader.grub = {
+    device = "nodev";
+    efiSupport = true;
+    enable = true;
+    memtest86.enable = true;
+    useOSProber = true;
+    splashImage = ./grub-background.jpg;
+  };
 
   boot.loader.efi.canTouchEfiVariables = true;
 
@@ -20,6 +27,7 @@
 
   boot.kernelParams = [ "amd_iommu=on" "iommu=pt" ];
   boot.initrd.kernelModules = [ "amdgpu" "v4l2loopback" "kvm-amd" "vfio-pci" ];
+  boot.kernel.sysctl = { "vm.swappiness" = 0; };
 
   # Use specific kernel version
   boot.kernelPackages = pkgs.linuxPackages_latest;
@@ -32,7 +40,7 @@
 
   # Networking
   networking = {
-    hostName = "arzt-desktop";
+    hostName = "${username}-desktop";
     networkmanager.enable = true;
   };
 
@@ -45,29 +53,27 @@
 
   # i18n
   i18n.defaultLocale = "en_US.UTF-8";
+  i18n.extraLocaleSettings = {
+    LC_TIME = "ru_RU.UTF-8";
+    LC_ALL = "en_US.UTF-8";
+    LC_CTYPE = "en_US.UTF-8";
+    LANG = "en_US.UTF-8";
+    LANGUAGE = "en_US.UTF-8";
+  };
 
   # enable SDDM login manager
   services.xserver.enable = true;
   services.xserver.videoDrivers = [ "amdgpu" ];
-  services.xserver.displayManager.sddm.enable = true;
-  # enable the cinnamon desktop
-  services.xserver.desktopManager.cinnamon.enable = true;
-  # enable the Hyprland compositor
-  programs.hyprland = {
-    enable = true;
-    xwayland.enable = true;
+  services.xserver.displayManager = {
+    sddm.enable = true;
+    sddm.wayland.enable = true;
+    defaultSession = "hyprland";
+    autoLogin.enable = true;
+    autoLogin.user = username;
   };
-
-  programs.steam.enable = true;
-  programs.thunar.enable = true;
-  services.gvfs.enable = true; # Mount, trash, and other functionalities
-  services.tumbler.enable = true; # Thumbnail support for images
-
-  xdg = {
-    mime.defaultApplications = {
-      "inode/directory" = "thunar.desktop";
-    };
-  };
+  # enable the desktop
+  # services.xserver.desktopManager.hyprland.enable = true;
+  programs.hyprland.enable = true;
   xdg.portal = {
     enable = true;
     extraPortals = with pkgs; [
@@ -78,14 +84,19 @@
     };
   };
 
-  environment.sessionVariables = {
-    # EDITOR = "emacs";
-    XDG_CONFIG_HOME = "$HOME/.config";
-    XDG_CACHE_HOME = "$HOME/.cache";
-    XDG_DATA_HOME = "$HOME/.local/share";
-    XDG_STATE_HOME = "$HOME/.local/state";
-    # zsh config
-    ZDOTDIR = "$XDG_CONFIG_HOME/zsh";
+  programs.steam = {
+    enable = true;
+    dedicatedServer.openFirewall = true; # Open ports in the firewall for Source Dedicated Server
+  };
+
+  programs.thunar.enable = true;
+  services.gvfs.enable = true; # Mount, trash, and other functionalities
+  services.tumbler.enable = true; # Thumbnail support for images
+
+  xdg = {
+    mime.defaultApplications = {
+      "inode/directory" = "thunar.desktop";
+    };
   };
 
   # For hardware acceleration
@@ -102,18 +113,8 @@
     driSupport = true;
     driSupport32Bit = true; # Steam support
 
-    extraPackages = with pkgs; [
-      # Vulkan
-      mesa
-
-      # HIP
-      rocm-opencl-icd
-      rocm-opencl-runtime
-
-      # VAAPI
-      vaapiVdpau
-      libvdpau-va-gl
-    ];
+    extraPackages = [ pkgs.amdvlk ];
+    extraPackages32 = [ pkgs.driversi686Linux.amdvlk ];
   };
 
   # Enable sound.
@@ -147,8 +148,7 @@
     enable = true;
   };
 
-  # Define a user account. Don't forget to set a password with ‘passwd’.
-  users.users.arzt = {
+  users.users.${username} = {
     shell = pkgs.zsh;
     isNormalUser = true;
     extraGroups = [ "wheel" "libvirtd" "networkmanage" "jackaudio" "docker" "kvm" ];
@@ -168,6 +168,7 @@
       })
     )
     chezmoi
+    dunst
     curl
     wget
     code-minimap
@@ -182,6 +183,7 @@
     gotop
     telegram-desktop
     kickoff
+    rofi-wayland
     prismlauncher
     neofetch
     pfetch
@@ -237,6 +239,27 @@
     mpvpaper
     vulkan-tools
     vulkan-validation-layers
+    valgrind
+    steam-run
+    obsidian
+    joshuto
+    figlet
+    lolcat
+    loc
+    dwl
+    discord
+    vesktop
+    distrobox
+  ];
+
+  nixpkgs.overlays = [
+    (final: prev: {
+      steam = prev.steam.override ({ extraLibraries ? pkgs': [ ], ... }: {
+        extraLibraries = pkgs': (extraLibraries pkgs') ++ ([
+          pkgs'.gperftools
+        ]);
+      });
+    })
   ];
 
   services.flatpak.enable = true;
@@ -246,7 +269,7 @@
   # Enable libvirtd daemon
   virtualisation.libvirtd = {
     enable = true;
-    qemuPackage = pkgs.qemu_kvm;
+    qemu.package = pkgs.qemu_kvm;
   };
 
   # enable access from hooks to bash, modprobe, systemctl, etc
@@ -274,34 +297,6 @@
   '';
   programs.dconf.enable = true;
 
-  services.syncthing = {
-    enable = true;
-    user = "arzt"; # Folder for Syncthing's settings and keys
-    configDir = "/home/arzt/.config/syncthing/";
-    devices = {
-      "syncthing-server" = {
-        id = "G73YKIP-5LR3WX6-3MB3SEA-OFZ3Z63-GKXDHIF-VXOQYOA-A7EKLJ3-W72FMAT";
-      };
-    };
-    folders = {
-      "music" = {
-        path = "/home/arzt/Music/";
-        devices = [ "syncthing-server" ];
-        id = "zxgmd-6avto";
-      };
-      "keepass" = {
-        path = "/home/arzt/.local/keepassdb/";
-        devices = [ "syncthing-server" ];
-        id = "s4wz9-6tctj";
-      };
-      "minecraft-client" = {
-        path = "/home/arzt/.local/share/PrismLauncher/";
-        devices = [ "syncthing-server" ];
-        id = "bkurt-rntt4";
-      };
-    };
-  };
-
   nix = {
     settings.auto-optimise-store = true;
     gc = {
@@ -309,6 +304,123 @@
       dates = "weekly";
       options = "--delete-older-then 7d";
     };
+  };
+
+  programs.nix-ld.enable = true;
+  environment.variables = lib.mkForce {
+    NIX_LD_LIBRARY_PATH = with pkgs; lib.makeLibraryPath [
+      stdenv.cc.cc
+      openssl
+      xorg.libXcomposite
+      xorg.libXtst
+      xorg.libXrandr
+      xorg.libXext
+      xorg.libX11
+      xorg.libXfixes
+      libGL
+      libva
+      pipewire
+      xorg.libxcb
+      xorg.libXdamage
+      xorg.libxshmfence
+      xorg.libXxf86vm
+      libelf
+
+      # Required
+      glib
+      gtk2
+      bzip2
+
+      # Without these it silently fails
+      xorg.libXinerama
+      xorg.libXcursor
+      xorg.libXrender
+      xorg.libXScrnSaver
+      xorg.libXi
+      xorg.libSM
+      xorg.libICE
+      gnome2.GConf
+      nspr
+      nss
+      cups
+      libcap
+      SDL2
+      libusb1
+      dbus-glib
+      ffmpeg
+      # Only libraries are needed from those two
+      libudev0-shim
+
+      # Verified games requirements
+      xorg.libXt
+      xorg.libXmu
+      libogg
+      libvorbis
+      SDL
+      SDL2_image
+      glew110
+      libidn
+      tbb
+
+      # Other things from runtime
+      flac
+      freeglut
+      libjpeg
+      libpng
+      libpng12
+      libsamplerate
+      libmikmod
+      libtheora
+      libtiff
+      pixman
+      speex
+      SDL_image
+      SDL_ttf
+      SDL_mixer
+      SDL2_ttf
+      SDL2_mixer
+      libappindicator-gtk2
+      libdbusmenu-gtk2
+      libindicator-gtk2
+      libcaca
+      libcanberra
+      libgcrypt
+      libvpx
+      librsvg
+      xorg.libXft
+      libvdpau
+      gnome2.pango
+      cairo
+      atk
+      gdk-pixbuf
+      fontconfig
+      freetype
+      dbus
+      alsaLib
+      expat
+      # Needed for electron
+      libdrm
+      mesa
+      libxkbcommon
+
+      wlroots
+      xwayland
+      wayland
+      wayland.dev
+      libinput
+      libinput.dev
+      xorg.xcbutilwm
+      xorg.xcbutilwm.dev
+    ];
+    NIX_LD = lib.fileContents "${pkgs.stdenv.cc}/nix-support/dynamic-linker";
+
+    # EDITOR = "emacs";
+    XDG_CONFIG_HOME = "$HOME/.config";
+    XDG_CACHE_HOME = "$HOME/.cache";
+    XDG_DATA_HOME = "$HOME/.local/share";
+    XDG_STATE_HOME = "$HOME/.local/state";
+    # zsh config
+    ZDOTDIR = "$XDG_CONFIG_HOME/zsh";
   };
 
   # This value determines the NixOS release from which the default
