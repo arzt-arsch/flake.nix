@@ -22,15 +22,15 @@ in
 
   boot.loader.efi.canTouchEfiVariables = true;
 
-  boot.extraModulePackages = with config.boot.kernelPackages;
-    [ v4l2loopback.out ];
+  boot.extraModulePackages = [ pkgs.unstable.linuxPackages.v4l2loopback ];
 
   boot.kernelParams = [ "amd_iommu=on" "iommu=pt" ];
   boot.initrd.kernelModules = [ "amdgpu" "v4l2loopback" "kvm-amd" "vfio-pci" ];
+  # boot.initrd.kernelModules = [ "amdgpu" "kvm-amd" "vfio-pci" ];
   boot.kernel.sysctl = { "vm.swappiness" = 0; };
 
   # Use specific kernel version
-  boot.kernelPackages = pkgs.linuxPackages_latest;
+  boot.kernelPackages =  pkgs.unstable.linuxPackages;
   boot.extraModprobeConfig = ''
     # exclusive_caps: Skype, Zoom, Teams etc. will only show device when actually streaming
     # card_label: Name of virtual camera, how it'll show up in Skype, Zoom, Teams
@@ -250,6 +250,7 @@ in
     discord
     vesktop
     distrobox
+    eza
   ];
 
   nixpkgs.overlays = [
@@ -298,7 +299,10 @@ in
   programs.dconf.enable = true;
 
   nix = {
-    settings.auto-optimise-store = true;
+    settings = {
+      auto-optimise-store = true;
+      experimental-features = [ "nix-command" "flakes" ];
+    };
     gc = {
       automatic = true;
       dates = "weekly";
